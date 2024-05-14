@@ -260,14 +260,14 @@ void gameMenu()
                 {
                     if (event_menu.text.unicode < 128 &&  event_menu.text.unicode != 8) // ввод символов
                     {
-                        if (height_inputString.size() < 2 && height_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "высота игрового поля"
+                        if (height_inputString.size() < 6 && height_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "высота игрового поля"
                         {
                             height_inputString += static_cast<char>(event_menu.text.unicode);
                             int height_value = std::stoi(height_inputString);
                             if (height_value >= 1 && height_value <= 25) 
                                 height_input_text.setString(height_inputString);
                         }
-                        else if (width_inputString.size() < 2 && width_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "ширина игрового поля"
+                        else if (width_inputString.size() < 6 && width_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "ширина игрового поля"
                         {
                             width_inputString += static_cast<char>(event_menu.text.unicode);
                             int width_value = std::stoi(width_inputString);
