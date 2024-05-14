@@ -2,9 +2,19 @@
 
 using namespace sf;
 
+void deleteSavegames() 
+{
+    for (int i = 1; i < 10; i++) 
+    {
+        std::string filename = "saves/savegame" + std::to_string(i) + ".save";
+        std::cout << filename << std::endl;
+        std::remove(filename.c_str());
+    }
+}
+
 void gamePlay(unsigned int width, unsigned int height, unsigned int mines)
 {
-    unsigned int window_width = width * 32 + 200;
+    unsigned int window_width = width * 32 + 400;
     unsigned int window_height = height * 32;
 
     RenderWindow Game(VideoMode(window_width, window_height), "Minesweeper", Style::Default);
@@ -67,6 +77,20 @@ void gamePlay(unsigned int width, unsigned int height, unsigned int mines)
     time_output.setPosition(timer_pos_x, 35);
     time_output.setFillColor(Color::White);
 
+    Text save_button_input_text;
+    save_button_input_text.setFont(font);
+    save_button_input_text.setCharacterSize(30);
+    save_button_input_text.setPosition(width * 32 + 200, 32 * 2 + 32);
+    save_button_input_text.setFillColor(Color::White);
+    std::string save_button_inputString;
+
+    Text load_button_input_text;
+    load_button_input_text.setFont(font);
+    load_button_input_text.setCharacterSize(30);
+    load_button_input_text.setPosition(width * 32 + 200, 32 * 4 + 32);
+    load_button_input_text.setFillColor(Color::White);
+    std::string load_button_inputString;
+
     while (Game.isOpen())
     {
         int seconds = clock.getElapsedTime().asSeconds();
@@ -83,12 +107,14 @@ void gamePlay(unsigned int width, unsigned int height, unsigned int mines)
         {
             if (event_game.type == Event::Closed)
             {
+                deleteSavegames();
                 Game.close();
             }
             else 
             {
                 if (event_game.key.code == Keyboard::Escape)
                 {
+                    deleteSavegames();
                     Game.close();
                 }
                 else if (event_game.type == Event::MouseButtonPressed)
@@ -101,13 +127,15 @@ void gamePlay(unsigned int width, unsigned int height, unsigned int mines)
                             gameStarted = true;
                         }
                         gameField.uncover(event_game.mouseButton.x / 32, event_game.mouseButton.y / 32);
-                        if (save_button_field.getGlobalBounds().contains(event_game.mouseButton.x, event_game.mouseButton.y))
+                        if (save_button_field.getGlobalBounds().contains(event_game.mouseButton.x, event_game.mouseButton.y) && !save_button_inputString.empty())
                         {
-                            gameField.saveGame("saves/savegame.save"); 
+                            std::string saveFileName = "saves/savegame" + save_button_inputString + ".save";
+                            gameField.saveGame(saveFileName.c_str());
                         }
-                        if (load_button_field.getGlobalBounds().contains(event_game.mouseButton.x, event_game.mouseButton.y))
+                        if (load_button_field.getGlobalBounds().contains(event_game.mouseButton.x, event_game.mouseButton.y) && !load_button_inputString.empty())
                         {
-                            gameField.loadGame("saves/savegame.save");
+                            std::string saveFileName = "saves/savegame" + load_button_inputString + ".save";
+                            gameField.loadGame(saveFileName.c_str());
                         }
                     }
                     else if (event_game.mouseButton.button == Mouse::Right)
@@ -115,6 +143,46 @@ void gamePlay(unsigned int width, unsigned int height, unsigned int mines)
                         gameField.flag(event_game.mouseButton.x / 32, event_game.mouseButton.y / 32);
                     }
                     
+                }
+                else if (event_game.type == Event::TextEntered)
+                {
+                    if (event_game.text.unicode < 128 &&  event_game.text.unicode != 8) // ввод символов
+                    {
+                        if (save_button_inputString.size() < 2 && save_button_field.getGlobalBounds().contains(Mouse::getPosition(Game).x, Mouse::getPosition(Game).y)) // ввод числового значения в поле "Save game"
+                        {
+                            save_button_inputString += static_cast<char>(event_game.text.unicode);
+                            int save_button_value = std::stoi(save_button_inputString);
+                            if (save_button_value >= 1 && save_button_value <= 9) 
+                                save_button_input_text.setString(save_button_inputString);
+                        }
+                        else if (load_button_inputString.size() < 2 && load_button_field.getGlobalBounds().contains(Mouse::getPosition(Game).x, Mouse::getPosition(Game).y)) // ввод числового значения в поле "Load game"
+                        {
+                            load_button_inputString += static_cast<char>(event_game.text.unicode);
+                            int load_button_value = std::stoi(load_button_inputString);
+                            if (load_button_value >= 1 && load_button_value <= 9) 
+                                load_button_input_text.setString(load_button_inputString);
+                        }
+
+                    }
+                    else if (event_game.text.unicode == 8) // удаление символов (backspace)
+                    {
+                        if (save_button_field.getGlobalBounds().contains(Mouse::getPosition(Game).x, Mouse::getPosition(Game).y)) // удаление одного символа значении поля "Save game"
+                        {
+                            if (!save_button_inputString.empty())
+                            {
+                                save_button_inputString.pop_back();
+                                save_button_input_text.setString(save_button_inputString);
+                            }
+                        }
+                        else if (load_button_field.getGlobalBounds().contains(Mouse::getPosition(Game).x, Mouse::getPosition(Game).y)) // удаление одного символа значении поля "Load game"
+                        {
+                            if (!load_button_inputString.empty())
+                            {
+                                load_button_inputString.pop_back();
+                                load_button_input_text.setString(load_button_inputString);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -125,6 +193,9 @@ void gamePlay(unsigned int width, unsigned int height, unsigned int mines)
         Game.draw(time_output);
         Game.draw(save_button_text);
         Game.draw(load_button_text);
+
+        Game.draw(save_button_input_text); 
+        Game.draw(load_button_input_text); 
         Game.display();
         gameField.gameOverReset();
     }
@@ -260,18 +331,18 @@ void gameMenu()
                 {
                     if (event_menu.text.unicode < 128 &&  event_menu.text.unicode != 8) // ввод символов
                     {
-                        if (height_inputString.size() < 6 && height_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "высота игрового поля"
+                        if (height_inputString.size() < 3 && height_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "высота игрового поля"
                         {
                             height_inputString += static_cast<char>(event_menu.text.unicode);
                             int height_value = std::stoi(height_inputString);
-                            if (height_value >= 1 && height_value <= 25) 
+                            if (height_value >= 6 && height_value <= 25) 
                                 height_input_text.setString(height_inputString);
                         }
-                        else if (width_inputString.size() < 6 && width_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "ширина игрового поля"
+                        else if (width_inputString.size() < 3 && width_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "ширина игрового поля"
                         {
                             width_inputString += static_cast<char>(event_menu.text.unicode);
                             int width_value = std::stoi(width_inputString);
-                            if (width_value >= 1 && width_value <= 35) 
+                            if (width_value >= 6 && width_value <= 35) 
                                 width_input_text.setString(width_inputString);
                         }
                         else if (difficulty_inputString.size() < 1 && difficulty_input_field.getGlobalBounds().contains(Mouse::getPosition(Menu).x, Mouse::getPosition(Menu).y)) // ввод числового значения в поле "количество мин на игровом поля"
