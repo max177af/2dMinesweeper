@@ -1,0 +1,8 @@
+.vscode/
+*.code-workspace
+
+*.vcxproj
+*.vcxproj.user
+*.suo
+*.ipch
+Release/
